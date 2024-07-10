@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <list>
+#include <iterator>
 #include <sys/mman.h>
 
 typedef size_t addr_t;
@@ -18,17 +19,17 @@ public:
 
   addr_t base = 0x00;
 
-  DynTable(uint64_t size = DEFAULT_PAGE_COUNT) : _pool_size(size) {
+  DynTable(uint64_t bytes = DEFAULT_PAGE_COUNT * PAGE_SIZE) : n_pages(bytes / PAGE_SIZE) {
     void *pool_init =
-        mmap(nullptr, _pool_size * PAGE_SIZE, PROT_READ | PROT_WRITE,
-             MAP_PRIVATE | MAP_ANON, 0, PAGE_SIZE);
+      mmap(nullptr, n_pages * PAGE_SIZE, PROT_READ | PROT_WRITE,
+	   MAP_PRIVATE | MAP_ANON, 0, PAGE_SIZE);
 
     if (pool_init == MAP_FAILED)
       throw FailedInit;
 
     base = (addr_t)pool_init;
 
-    _pool.push_back(new Block{.offset = 0, .size = _pool_size, .state = Free});
+    _pool.push_back(new Block{.offset = 0, .size = n_pages, .state = Free});
 
     _pool_partitions = 1;
   }
@@ -39,7 +40,7 @@ public:
 
     assert(_pool.front() != nullptr && "Memory was corrupted!");
 
-    munmap((void *)base, _pool_size * PAGE_SIZE);
+    munmap((void *)base, n_pages * PAGE_SIZE);
 
     while (!_pool.empty()) {
       delete _pool.back();
@@ -53,12 +54,12 @@ public:
     for (auto block_it = _pool.begin(); block_it != _pool.end(); block_it++) {
       if ((*block_it)->size >= n_pages && (*block_it)->state == Free) {
         Block *used_block = new Block{
-            .offset = (*block_it)->offset, .size = n_pages, .state = Used};
+	  .offset = (*block_it)->offset, .size = n_pages, .state = Used};
 
         Block *free_block = new Block{
-            .offset = used_block->offset + used_block->size * PAGE_SIZE,
-            .size = (*block_it)->size - used_block->size,
-            .state = Free};
+	  .offset = used_block->offset + used_block->size * PAGE_SIZE,
+	  .size = (*block_it)->size - used_block->size,
+	  .state = Free};
 
         _pool.remove(*block_it);
         _pool.insert(block_it, used_block);
@@ -72,6 +73,29 @@ public:
     return _pool.back()->offset;
   }
 
+  void return_chunk(uint64_t offset) {
+    for (auto block_it = _pool.begin(); block_it != _pool.end(); block_it++) {
+      if ((*block_it)->offset != offset) continue;
+
+      (*block_it)->state = Free;
+
+      auto pred = std::prev(block_it, 2);
+      auto succ = std::next(block_it, 1);
+
+      if ((*succ)->state == Free) {
+	(*block_it)->size += (*succ)->size;
+	_pool.remove(*succ);
+	_pool_partitions--;
+      }
+
+      if ((*pred)->state == Free) {
+	(*pred)->size += (*block_it)->size;
+	_pool.remove(*block_it);
+	_pool_partitions--;
+      }
+    }
+  }
+
 private:
   enum BlockState { Free, Used };
 
@@ -82,12 +106,12 @@ private:
   };
 
   std::list<Block *> _pool;
-  uint64_t _pool_size = 0;
+  uint64_t n_pages = 0;
   uint64_t _pool_partitions = 0;
 
-  void extend(uint64_t n_pages) {
-    void *pool_ext = mremap((void *)base, _pool_size * PAGE_SIZE,
-                            (_pool_size + n_pages) * PAGE_SIZE, MREMAP_MAYMOVE);
+  void extend(uint64_t extra_pages) {
+    void *pool_ext = mremap((void *)base, n_pages * PAGE_SIZE,
+                            (n_pages + extra_pages) * PAGE_SIZE, MREMAP_MAYMOVE);
 
     if (pool_ext == MAP_FAILED)
       throw FailedExt;
@@ -97,11 +121,11 @@ private:
     Block *last_partition = _pool.back();
 
     if (last_partition->state == Free)
-      last_partition->size += n_pages;
+      last_partition->size += extra_pages;
     else {
       _pool.push_back(new Block{.offset = last_partition->offset +
                                           last_partition->size * PAGE_SIZE,
-                                .size = n_pages,
+                                .size = extra_pages,
                                 .state = Free});
     }
   }

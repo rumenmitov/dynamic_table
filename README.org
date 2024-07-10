@@ -1,0 +1,4 @@
+#+title: Dynamic Memory Table
+#+author: Rumen Mitov
+
+This is a simple program that implements a *dynamic* approach to virtual memory management.
