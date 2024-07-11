@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cassert>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <chrono>
 
 #include "dyn_table.h"
 
@@ -45,5 +47,21 @@ namespace Tests {
     }
 
     std::cout << "passed.\n";
+  }
+}
+
+namespace Performance {
+  using namespace std::chrono;
+  
+  inline uint64_t extending_memory(uint64_t bytes) {
+    DynTable dyn_table(1);
+    
+    auto start = high_resolution_clock::now();
+    uint64_t offset = dyn_table.get_chunk(bytes);
+    auto end = high_resolution_clock::now();
+
+    dyn_table.return_chunk(offset);
+
+    return duration_cast<nanoseconds>(end - start).count();
   }
 }

@@ -6,15 +6,25 @@
 
 #ifdef DEBUG
 #include "test-dyn_table.h"
+#include <fstream>
 #endif
 
 using namespace std;
 int main(void) {
 
 #ifdef DEBUG
+  
   Tests::memory_allocation_and_release();
   Tests::extending_memory();
-#endif
+
+  ofstream res("results.csv");
+  for (uint64_t i = 1; i < 20000; i++) {
+    res << i << '\t' << Performance::extending_memory(i * DynTable::PAGE_SIZE)
+        << endl;
+  }
+  res.close();
+  
+#else
 
   cout << endl;
   cout << "Dynamic Table Memory Allocation Program\n";
@@ -46,6 +56,8 @@ int main(void) {
   } catch (DynTableError err) {
     cerr << "Error encountered!" << endl;
   }
+
+#endif
 
   return 0;
 }

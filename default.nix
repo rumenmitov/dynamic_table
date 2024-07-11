@@ -11,5 +11,4 @@ pkgs.stdenv.mkDerivation {
 		    mkdir -p $out/build
         cp -r build/* $out/build
       '';
-
 }

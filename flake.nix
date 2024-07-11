@@ -13,9 +13,9 @@
     {
 
       packages.${system} = {
-        default = import ./build.nix { inherit pkgs; };
-        debug   = import ./build.nix { inherit pkgs; flag = "debug"; };
-        graph   = import ./build.nix { inherit pkgs; flag = "graph"; };
+        default = import ./default.nix { inherit pkgs; };
+        debug   = import ./default.nix { inherit pkgs; flag = "debug"; };
+        graph   = import ./default.nix { inherit pkgs; flag = "graph"; };
       };
 
   };

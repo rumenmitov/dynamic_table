@@ -11,5 +11,9 @@ debug:
 	@mkdir -p build/debug
 	@$(CC) $(SRC) -o build/debug/$(OBJ) $(FLAGS) -g -DDEBUG
 
+graph: debug
+	./build/debug/$(OBJ)
+	@gnuplot --version
+
 clean:
-	@rm -rf build
+	@rm -rf build results.csv
