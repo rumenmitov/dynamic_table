@@ -1,10 +1,34 @@
 #+title: Dynamic Memory Table
 #+author: Rumen Mitov
+#+options: H:6
 
 This is a simple program that implements a *dynamic* approach to virtual memory management.
 
 * Usage
-Just run =make=.
+** Nix
+#+begin_src sh
+  nix build
+  ./result/build/release/main
+#+end_src
+
+** Without Nix
+#+begin_src sh
+  make
+  ./build/release/main
+#+end_src
 
 * Testing
-One can find the unit tests in the =src/test-dyn_table.h= file. The tests can be run with the =make debug= command.
+One can find the unit tests in the =src/test-dyn_table.h= file.
+
+** Running Unit Tests
+*** Nix
+#+begin_src sh
+  nix build .#debug
+  ./release/build/debug/main
+#+end_src
+
+*** Non-Nix
+#+begin_src sh
+  make debug
+  ./build/debug/main
+#+end_src

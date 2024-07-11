@@ -12,9 +12,11 @@
     in
     {
 
-      packages.${system}.default = import ./build.nix { inherit pkgs; };
-      packages.${system}.debug   = import ./build.nix { inherit pkgs; flag = "debug"; };
-      packages.${system}.graph   = import ./build.nix { inherit pkgs; flag = "graph"; };
+      packages.${system} = {
+        default = import ./build.nix { inherit pkgs; };
+        debug   = import ./build.nix { inherit pkgs; flag = "debug"; };
+        graph   = import ./build.nix { inherit pkgs; flag = "graph"; };
+      };
 
   };
 }

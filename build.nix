@@ -5,7 +5,7 @@ pkgs.stdenv.mkDerivation {
     
   buildInputs = with pkgs; [ gnuplot ];
 
-  buildPhase = "make " ++ flag;
+  buildPhase = "make " + flag;
 
   installPhase = ''
 		    mkdir -p $out/build
