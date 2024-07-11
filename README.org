@@ -2,3 +2,9 @@
 #+author: Rumen Mitov
 
 This is a simple program that implements a *dynamic* approach to virtual memory management.
+
+* Usage
+Just run =make=.
+
+* Testing
+One can find the unit tests in the =src/test-dyn_table.h= file. The tests can be run with the =make debug= command.

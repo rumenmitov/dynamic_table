@@ -39,7 +39,7 @@ public:
    * @param uint64_t bytes = DEFAULT_PAGE_COUNT * PAGE_SIZE The initial size of the memory pool.
    * @throws DynTableError
    */
-  DynTable(uint64_t bytes = DEFAULT_PAGE_COUNT * PAGE_SIZE) : _n_pages(bytes / PAGE_SIZE) {
+  DynTable(uint64_t bytes = DEFAULT_PAGE_COUNT * PAGE_SIZE) : _n_pages((bytes / PAGE_SIZE) + 1) {
     void *pool_init =
         mmap(nullptr, _n_pages * PAGE_SIZE, PROT_READ | PROT_WRITE,
              MAP_PRIVATE | MAP_ANON, -1, PAGE_SIZE);
@@ -117,12 +117,12 @@ public:
       auto pred = std::prev(block_it, 2);
       auto succ = std::next(block_it, 1);
 
-      if ((*succ)->state == Free) {
+      if (succ != _pool.end() && (*succ)->state == Free) {
         (*block_it)->size += (*succ)->size;
         _pool.remove(*succ);
       }
 
-      if ((*pred)->state == Free) {
+      if (block_it != _pool.begin() && (*pred)->state == Free) {
         (*pred)->size += (*block_it)->size;
         _pool.remove(*block_it);
       }
