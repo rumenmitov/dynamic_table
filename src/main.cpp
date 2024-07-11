@@ -17,7 +17,7 @@ int main(void) {
   Tests::memory_allocation_and_release();
   Tests::extending_memory();
 
-  ofstream res("results.csv");
+  ofstream res("results.dat");
   for (uint64_t i = 1; i < 20000; i++) {
     res << i << '\t' << Performance::extending_memory(i * DynTable::PAGE_SIZE)
         << endl;

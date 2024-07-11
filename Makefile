@@ -12,8 +12,8 @@ debug:
 	@$(CC) $(SRC) -o build/debug/$(OBJ) $(FLAGS) -g -DDEBUG
 
 graph: debug
-	./build/debug/$(OBJ)
-	@gnuplot --version
+	@./build/debug/$(OBJ)
+	@gnuplot results.p
 
 clean:
 	@rm -rf build results.csv
