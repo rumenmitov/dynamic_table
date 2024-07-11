@@ -1,3 +1,5 @@
+#include <cstdint>
+#include <cstdio>
 #include <iostream>
 
 #include "dyn_table.h"
@@ -5,17 +7,24 @@
 using namespace std;
 int main(void) {
 
+  uint64_t bytes;
+
+  cout << "Enter the number of ASCII characters that you need for your message: ";
+  cin >> bytes;
+  bytes += 1; /* NOTE This is for the null-terminator. */
+
+  getchar();
+
+  cout << "Enter message: ";
+
   try {
     DynTable dyn_table;
 
-    uint64_t offset = dyn_table.get_chunk(5);
+    uint64_t offset = dyn_table.get_chunk(bytes);
     char* message = (char*) (dyn_table.base + offset);
 
-    message[0] = 'H';
-    message[1] = 'e';
-    message[2] = 'l';
-    message[3] = 'l';
-    message[4] = 'o';
+    cin.getline(message, bytes);
+    message[bytes] = '\0';
 
     cout << "Message was: " << message << endl;
 
