@@ -13,7 +13,7 @@ debug:
 
 graph: debug
 	@./build/debug/$(OBJ)
-	@gnuplot results.p
+	@gnuplot ./results.p
 
 clean:
-	@rm -rf build results.csv
+	@rm -rf build results.dat
