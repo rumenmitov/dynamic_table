@@ -32,3 +32,18 @@ One can find the unit tests in the =src/test-dyn_table.h= file.
   make debug
   ./build/debug/main
 #+end_src
+
+* Efficiency of Expanding Memory Pool
+[[./results.png]]
+
+The instructions to generate the graph are below.
+
+** Nix
+#+begin_src sh
+  nix build .#graph
+#+end_src
+
+** Non-Nix
+#+begin_src sh
+  make graph
+#+end_src
