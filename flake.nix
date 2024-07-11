@@ -12,8 +12,10 @@
     in
     {
 
-      devShells.${system} = {
-        default = import ./shell.nix { inherit pkgs; };
+      packages.${system} = {
+        default = import ./default.nix { inherit pkgs; };
+        debug   = import ./default.nix { inherit pkgs; flags = "debug"; };
+        graph   = import ./default.nix { inherit pkgs; flags = "graph"; };
       };
 
   };
