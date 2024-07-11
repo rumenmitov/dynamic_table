@@ -6,3 +6,6 @@
 build/
 result
 *.dat
+
+# Include
+!results.png
