@@ -3,8 +3,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <list>
 #include <iterator>
+#include <list>
 #include <sys/mman.h>
 
 /* Virtual address */
@@ -19,7 +19,8 @@ typedef size_t addr_t;
 enum DynTableError { FailedInit, FailedExt };
 
 /*
- * @brief Class for that manages virtual memory with the help of a dynamic table.
+ * @brief Class for that manages virtual memory with the help of a dynamic
+ * table.
  */
 class DynTable {
 
@@ -31,23 +32,22 @@ public:
    * This is needed for when the pool needs to be extended as the base location
    * could change.
    */
-  addr_t base = 0x00;
-
+  addr_t* base = (addr_t*) 0x00;
 
   /*
-   * @brief Default constructor of DynTable.
+   * @brief Constructor of DynTable with user-specified amount of memory.
    * @param uint64_t bytes = DEFAULT_PAGE_COUNT * PAGE_SIZE The initial size of the memory pool.
    * @throws DynTableError
    */
   DynTable(uint64_t bytes = DEFAULT_PAGE_COUNT * PAGE_SIZE) : _n_pages(bytes / PAGE_SIZE) {
     void *pool_init =
-      mmap(nullptr, _n_pages * PAGE_SIZE, PROT_READ | PROT_WRITE,
-	   MAP_PRIVATE | MAP_ANON, 0, PAGE_SIZE);
+        mmap(nullptr, _n_pages * PAGE_SIZE, PROT_READ | PROT_WRITE,
+             MAP_PRIVATE | MAP_ANON, -1, PAGE_SIZE);
 
     if (pool_init == MAP_FAILED)
       throw FailedInit;
 
-    base = (addr_t)pool_init;
+    base = (addr_t*) pool_init;
 
     _pool.push_back(new Block{.offset = 0, .size = _n_pages, .state = Free});
   }
@@ -69,11 +69,11 @@ public:
     }
   }
 
-
   /*
    * @brief Interface to borrow virtual memory.
    * @param uint64_t bytes The amount of memory needed.
-   * @returns uint64_t An offset of the base address, signifying the start of the chunk.
+   * @returns uint64_t An offset of the base address, signifying the start of
+   * the chunk.
    * @throws DynTableError
    */
   uint64_t get_chunk(uint64_t bytes) {
@@ -82,16 +82,17 @@ public:
     for (auto block_it = _pool.begin(); block_it != _pool.end(); block_it++) {
       if ((*block_it)->size >= n_pages && (*block_it)->state == Free) {
         Block *used_block = new Block{
-	  .offset = (*block_it)->offset, .size = n_pages, .state = Used};
+            .offset = (*block_it)->offset, .size = n_pages, .state = Used};
 
         Block *free_block = new Block{
-	  .offset = used_block->offset + used_block->size * PAGE_SIZE,
-	  .size = (*block_it)->size - used_block->size,
-	  .state = Free};
+            .offset = used_block->offset + used_block->size * PAGE_SIZE,
+            .size = (*block_it)->size - used_block->size,
+            .state = Free};
 
-        _pool.remove(*block_it);
+	
         _pool.insert(block_it, used_block);
-        _pool.insert(block_it++, used_block);
+        _pool.insert(std::next(block_it, 1), free_block);
+	_pool.remove(*block_it);
 
         return used_block->offset;
       }
@@ -103,11 +104,13 @@ public:
 
   /*
    * @brief Interface to return borrowed virtual memory.
-   * @param uint64_t offset The offset from base, signifying the start of the chunk.
+   * @param uint64_t offset The offset from base, signifying the start of the
+   * chunk.
    */
   void return_chunk(uint64_t offset) noexcept {
     for (auto block_it = _pool.begin(); block_it != _pool.end(); block_it++) {
-      if ((*block_it)->offset != offset) continue;
+      if ((*block_it)->offset != offset)
+        continue;
 
       (*block_it)->state = Free;
 
@@ -115,14 +118,16 @@ public:
       auto succ = std::next(block_it, 1);
 
       if ((*succ)->state == Free) {
-	(*block_it)->size += (*succ)->size;
-	_pool.remove(*succ);
+        (*block_it)->size += (*succ)->size;
+        _pool.remove(*succ);
       }
 
       if ((*pred)->state == Free) {
-	(*pred)->size += (*block_it)->size;
-	_pool.remove(*block_it);
+        (*pred)->size += (*block_it)->size;
+        _pool.remove(*block_it);
       }
+
+      return;
     }
   }
 
@@ -139,8 +144,7 @@ private:
   std::list<Block *> _pool;
 
   /* NOTE Keeps track of the total number of pages reserved.*/
-  uint64_t _n_pages = 0;
-
+  uint64_t _n_pages = DEFAULT_PAGE_COUNT;
 
   /*
    * @brief Extends the memory pool. Could potentially change the base address.
@@ -148,13 +152,14 @@ private:
    * @throws DynTableError
    */
   void extend(uint64_t extra_pages) {
-    void *pool_ext = mremap((void *)base, _n_pages * PAGE_SIZE,
-                            (_n_pages + extra_pages) * PAGE_SIZE, MREMAP_MAYMOVE);
+    void *pool_ext =
+        mremap((void *)base, _n_pages * PAGE_SIZE,
+               (_n_pages + extra_pages) * PAGE_SIZE, MREMAP_MAYMOVE);
 
     if (pool_ext == MAP_FAILED)
       throw FailedExt;
 
-    base = (addr_t)pool_ext;
+    base = (addr_t*) pool_ext;
     _n_pages += extra_pages;
 
     Block *last_block = _pool.back();
@@ -162,10 +167,10 @@ private:
     if (last_block->state == Free)
       last_block->size += extra_pages;
     else {
-      _pool.push_back(new Block{.offset = last_block->offset +
-                                          last_block->size * PAGE_SIZE,
-                                .size = extra_pages,
-                                .state = Free});
+      _pool.push_back(
+          new Block{.offset = last_block->offset + last_block->size * PAGE_SIZE,
+                    .size = extra_pages,
+                    .state = Free});
     }
   }
 };
