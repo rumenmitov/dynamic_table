@@ -10,6 +10,8 @@ pkgs.stdenv.mkDerivation {
   installPhase = ''
 		mkdir -p $out/build
 		cp -r build/* $out/build/
+    cp -r results.png $out/
+    cp -r results.dat $out/
   '';
 
 }
