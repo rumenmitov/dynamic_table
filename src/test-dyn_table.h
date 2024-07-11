@@ -37,7 +37,7 @@ namespace Tests {
 
     try {
       DynTable dyn_table(1);
-      uint64_t offset = dyn_table.get_chunk(1 * DynTable::PAGE_SIZE);
+      uint64_t offset = dyn_table.get_chunk(100 * DynTable::PAGE_SIZE);
       dyn_table.return_chunk(offset);
     } catch (DynTableError e) {
       std::cerr << "Failed to extend memory!\n";
